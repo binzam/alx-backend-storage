@@ -2,7 +2,7 @@
 
 import redis
 import uuid
-from typing import Union
+from typing import Union, Callable
 
 
 class Cache:
@@ -18,7 +18,7 @@ class Cache:
     def get(
             self,
             key: str,
-            fn: callable = None,
+            fn: Callable = None,
             ) -> Union[str, bytes, int, float, None]:
         if self._redis.exists(key):
             data = self._redis.get(key)
