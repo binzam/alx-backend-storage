@@ -36,12 +36,3 @@ def get_page(url: str) -> str:
     """Returns HTML content of a url"""
     res = requests.get(url)
     return res.text
-
-
-url_with_delay = "http://slowwly.robertomurray.co.uk/delay/5000/url/http://example.com"
-content = get_page(url_with_delay)
-print(content)
-
-
-cached_content = get_page(url_with_delay)
-print(cached_content)
