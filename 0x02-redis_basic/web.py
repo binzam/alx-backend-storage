@@ -1,38 +1,31 @@
 #!/usr/bin/env python3
-'''A module with tools for request caching and tracking.
-'''
-import redis
+
 import requests
-from functools import wraps
+import redis
+import time
 from typing import Callable
 
 
-redis_store = redis.Redis()
-'''The module-level Redis instance.
-'''
+def count_calls(method: Callable) -> Callable:
+    def wrapper(self, url: str) -> str:
+        key = f"count:{url}"
+        self._redis.incr(key)
+        return method(self, url)
+
+    return wrapper
 
 
-def data_cacher(method: Callable) -> Callable:
-    '''Caches the output of fetched data.
-    '''
-    @wraps(method)
-    def invoker(url) -> str:
-        '''The wrapper function for caching the output.
-        '''
-        redis_store.incr(f'count:{url}')
-        result = redis_store.get(f'result:{url}')
-        if result:
-            return result.decode('utf-8')
-        result = method(url)
-        redis_store.set(f'count:{url}', 0)
-        redis_store.setex(f'result:{url}', 10, result)
-        return result
-    return invoker
+class WebCache:
+    def __init__(self):
+        self._redis = redis.Redis()
 
-
-@data_cacher
-def get_page(url: str) -> str:
-    '''Returns the content of a URL after caching the request's response,
-    and tracking the request.
-    '''
-    return requests.get(url).text
+    @count_calls
+    def get_page(self, url: str) -> str:
+        cached_content = self._redis.get(url)
+        if cached_content:
+            return cached_content.decode("utf-8")
+        else:
+            response = requests.get(url)
+            content = response.text
+            self._redis.setex(url, 10, content)
+            return content
