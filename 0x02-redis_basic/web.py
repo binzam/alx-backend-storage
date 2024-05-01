@@ -10,8 +10,9 @@ store = redis.Redis()
 
 
 def count_url_access(method):
-    """ Decorator counting how many times
-    a URL is accessed """
+    """Decorator counting how many times
+    a URL is accessed"""
+
     @wraps(method)
     def wrapper(url):
         cached_key = "cached:" + url
@@ -26,11 +27,21 @@ def count_url_access(method):
         store.set(cached_key, html)
         store.expire(cached_key, 10)
         return html
+
     return wrapper
 
 
 @count_url_access
 def get_page(url: str) -> str:
-    """ Returns HTML content of a url """
+    """Returns HTML content of a url"""
     res = requests.get(url)
     return res.text
+
+
+url_with_delay = "http://slowwly.robertomurray.co.uk/delay/5000/url/http://example.com"
+content = get_page(url_with_delay)
+print(content)
+
+
+cached_content = get_page(url_with_delay)
+print(cached_content)
